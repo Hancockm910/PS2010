@@ -16,7 +16,7 @@ public:
 	AAMovieText();
 
 	// Pointers for setting the visual and audio objects.
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item | Sentence")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Item | Sentence")
 		class UTextRenderComponent* TextRenderComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Physical Object")
@@ -47,6 +47,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item | Sentence")
 		FString OutputString;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item | Sentence")
+		TArray<FString> StringArray;
+
 
 	FTimerHandle TimerHandle;
 
@@ -67,7 +70,9 @@ public:
 
 
 	UFUNCTION()
-		void InitialSoundTimer();
+		void InitialSoundTimer(int32 Index);
 
+	UFUNCTION(BlueprintCallable) 
+		FString ReadFile(FString filename);
 
 };
