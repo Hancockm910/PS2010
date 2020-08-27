@@ -38,7 +38,7 @@ public:
 		float RotationRate;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item | Media")
-		class UMediaSource* MediaSource;
+		class UFileMediaSource* MediaSource;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item | Media")
 		class UMediaPlayer* MediaPlayer;
@@ -50,6 +50,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item | Sentence")
 		TArray<FString> StringArray;
 
+	int32 SIndex;
 
 	FTimerHandle TimerHandle;
 
@@ -63,8 +64,9 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
+	UFUNCTION(BlueprintCallable)
 	void MyOnBeginOverlap(AActor* OtherActor);
+	UFUNCTION(BlueprintCallable)
 	void MyOnEndOverlap(AActor* OtherActor);
 
 
@@ -72,7 +74,7 @@ public:
 	UFUNCTION()
 		void InitialSoundTimer(int32 Index);
 
-	UFUNCTION(BlueprintCallable) 
-		FString ReadFile(FString filename);
+	UFUNCTION()
+		void RepeatingFunction();
 
 };

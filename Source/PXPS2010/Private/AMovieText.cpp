@@ -21,6 +21,9 @@
 #include "HAL/PlatformFilemanager.h"
 #include "Misc/Paths.h"
 
+#include "Runtime/MediaAssets/Public/FileMediaSource.h"
+
+
 
 // Sets default values
 AAMovieText::AAMovieText()
@@ -37,13 +40,25 @@ AAMovieText::AAMovieText()
 	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));
 	MeshComp->AttachTo(CollisionComp);
 
+	FString VideoPath = FPaths::ProjectContentDir();
+	VideoPath += "Movies/waves.mp4";
+	FText TextVariable = FText::AsCultureInvariant(VideoPath);
+/*
+	MediaSource = LoadObject<UMediaSource>(NULL, TextVariable, NULL, LOAD_None, NULL);*/
+	//MediaSource = NewObject<UMediaSource>;
 
-	MediaSource = LoadObject<UMediaSource>(NULL, TEXT("/Content/Movies/waves.mp4"), NULL, LOAD_None, NULL);
+
+	MediaSource = NewObject<UFileMediaSource>();
+	FString MediaDir = FPaths::ProjectContentDir();
+	MediaDir += "Movies/MP_Base.uasset";
+	//MediaSource->SetFilePath(FText::FromString(MediaDir));         
+	//Me->OpenSource(Video);
+
+
+
 
 	MediaPlayer = NewObject<UMediaPlayer>();
-	FString VideoPath = "/PXPS2010/Content/Movies/waves.mp4";
-	MediaPlayer->OpenSource(MediaSource);
-	MediaPlayer->AddToRoot();
+
 
 
 	// Assign properties to sphere component
@@ -61,15 +76,10 @@ AAMovieText::AAMovieText()
 	TextRenderComponent->SetHorizontalAlignment(EHTA_Center);
 	TextRenderComponent->SetYScale(1.0f);
 	TextRenderComponent->SetXScale(1.0f);
-	TextRenderComponent->SetVisibility(true);
+	TextRenderComponent->SetVisibility(false);
 	TextRenderComponent->SetText(NSLOCTEXT("AnyNs", "Any", "HelloWorld"));
 
 
-
-
-
-	OutputString = "No sound?!?!";
-	TextRenderComponent->SetText(FText::FromString(OutputString));
 
 
 	bRotate = false;
@@ -88,39 +98,17 @@ AAMovieText::AAMovieText()
 		return;
 	}
 	FFileHelper::LoadANSITextFileToStrings(*(projectDir), NULL, StringArray);
+
+	SIndex = 0;
 }
 
 // Called when the game starts or when spawned
 void AAMovieText::BeginPlay()
 {
 	Super::BeginPlay();
-
-	FTimerDelegate TimerDel;
-	TimerDel.BindUFunction(this, FName("InitialSoundTimer"), 0);
-
-	GetWorldTimerManager().SetTimer(TimerHandle, TimerDel, TimerVariable, false, 0.f);
-
-	//MediaPlayer->Pause();
-
-	//if (GEngine)
-	//{
-	//	FString CompleteFilePath = "/Content/Sentences/Scary.txt";
-	//	if (!FPlatformFileManager::Get().GetPlatformFile().FileExists(*CompleteFilePath))
-	//	{
-	//		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Could not Find File"));
-	//		return;
-	//	}
-
-	//	const int64 FileSize = FPlatformFileManager::Get().GetPlatformFile().FileSize(*CompleteFilePath);
-
-	//	//if not in player controller use UE_LOG. ClientMessages show up if you press ~ in-game
-
-	//	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::FromInt(FileSize));
-	//	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("File Size is: (in kb)"));
-	//	FString FileData = "TEST";
-	//	FFileHelper::LoadFileToString(FileData, *CompleteFilePath);
-	//	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FileData);
-	//}
+	float InitialTimer = 2.0f;
+	float RepeatingTimer = 3.0f;
+	GetWorldTimerManager().SetTimer(TimerHandle, this, &AAMovieText::RepeatingFunction, RepeatingTimer, true, InitialTimer);
 
 
 }
@@ -135,8 +123,6 @@ void AAMovieText::Tick(float DeltaTime)
 		FRotator Rotation = GetActorRotation();
 		Rotation.Yaw += DeltaTime * RotationRate;
 		SetActorRotation(Rotation);
-		//OutputString = FString::SanitizeFloat(DeltaTime);
-		//TextRenderComponent->SetText(FText::FromString(OutputString));
 	}
 }
 
@@ -157,43 +143,22 @@ void AAMovieText::InitialSoundTimer(int32 Index)
 	if (OverlapSound)
 	{
 		//UGameplayStatics::PlaySound2D(this, OverlapSound);
-		//OutputString = "Sound has started";
 	}
-
-	//for (auto i: StringArray)
-	//{
-	//	GLog->Log(FString::FromInt(Index) + "i=" + i);
-	//	//Index++;
-	//}
-	//GLog->Log("iStringArraySize=" + FString::FromInt(StringArray.Num()));
-
-	if (StringArray.Num() > 0 && StringArray.Num() - 1 > Index)
-	{
-		OutputString = StringArray[Index];
-		TextRenderComponent->SetText(OutputString);
-		GLog->Log("Output = " + OutputString);
-
-		FTimerDelegate TimerDel;
-		TimerDel.BindUFunction(this, FName("InitialSoundTimer"), ++Index);
-		GetWorld()->GetTimerManager().ClearTimer(TimerHandle);
-		//GetWorldTimerManager().SetTimer(TimerHandle, this, &AAMovieText::InitialSoundTimer(++Index), TimerVariable);
-		GetWorldTimerManager().SetTimer(TimerHandle, TimerDel, TimerVariable, false, 0.f);
-	}
-
-
 }
 
-FString AAMovieText::ReadFile(FString filename)
+// Called to rotate through sentences
+void AAMovieText::RepeatingFunction()
 {
-	//Read file ini [project]/Content/Data/ 
-	//you can change with other location
-	FString directory = FPaths::Combine(FPaths::EngineDir(), TEXT("Data"));
-	FString result;
-	IPlatformFile& file = FPlatformFileManager::Get().GetPlatformFile();
-	if (file.CreateDirectory(*directory)) 
+	// Once we've called this function enough times, clear the Timer.
+	if (++SIndex >= StringArray.Num())
 	{
-		FString myFile = directory + "/" + filename;
-		FFileHelper::LoadFileToString(result, *myFile);
+		GetWorldTimerManager().ClearTimer(TimerHandle);
+		// MemberTimerHandle can now be reused for any other Timer.
 	}
-	return result;
+	else 
+	{
+		// Sets text to the next line.
+		//TextRenderComponent->SetText(FText::FromString(StringArray[SIndex]));
+	}
 }
+
