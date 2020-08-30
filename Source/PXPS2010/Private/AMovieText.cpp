@@ -20,6 +20,7 @@
 #include "GenericPlatform/GenericPlatformFile.h"
 #include "HAL/PlatformFilemanager.h"
 #include "Misc/Paths.h"
+#include "DrawDebugHelpers.h"
 
 #include "Runtime/MediaAssets/Public/FileMediaSource.h"
 
@@ -62,9 +63,13 @@ AAMovieText::AAMovieText()
 
 
 	// Assign properties to sphere component
-	CollisionComp->InitSphereRadius(220.0f);
+	CollisionComp->InitSphereRadius(250.0f);
 
-	CollisionComp->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
+	//CollisionComp->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
+
+	CollisionComp->OnComponentBeginOverlap.AddDynamic(this, &AAMovieText::OnOverlapBegin);       // set up a notification for when this component overlaps something
+	CollisionComp->OnComponentEndOverlap.AddDynamic(this, &AAMovieText::OnOverlapEnd);       // set up a notification for when this component overlaps something
+
 
 
 	IdleParticlesComponent = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("IdleParticlesComponent"));
@@ -110,7 +115,8 @@ void AAMovieText::BeginPlay()
 	float RepeatingTimer = 3.0f;
 	GetWorldTimerManager().SetTimer(TimerHandle, this, &AAMovieText::RepeatingFunction, RepeatingTimer, true, InitialTimer);
 
-
+	FVector ActorLoc = GetActorLocation();
+	DrawDebugSphere(GetWorld(), ActorLoc, 200, 26, FColor(181, 0, 0), true, -1, 0, 2);
 }
 
 // Called every frame
@@ -126,24 +132,33 @@ void AAMovieText::Tick(float DeltaTime)
 	}
 }
 
-void AAMovieText::MyOnBeginOverlap(AActor* OtherActor)
+
+
+void AAMovieText::OnOverlapBegin(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	OutputString = "Hello " + OtherActor->GetName() + "!";
-	TextRenderComponent->SetText(FText::FromString(OutputString));
+	if (OtherActor && (OtherActor != this) && OtherComp)
+	{
+		InitialSoundTimer();
+	}
 }
 
-void AAMovieText::MyOnEndOverlap(AActor* OtherActor)
+void AAMovieText::OnOverlapEnd(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	TextRenderComponent->SetText(NSLOCTEXT("AnyNs", "Any", "HelloWorld"));
+
 }
 
-
-void AAMovieText::InitialSoundTimer(int32 Index)
+void AAMovieText::InitialSoundTimer()
 {
 	if (OverlapSound)
 	{
-		//UGameplayStatics::PlaySound2D(this, OverlapSound);
+		UGameplayStatics::PlaySound2D(this, OverlapSound);
+		
 	}
+	if (IdleParticlesComponent)
+	{
+		IdleParticlesComponent->Activate(false);
+	}
+	TextRenderComponent->SetText(FText::FromString("BOOM"));
 }
 
 // Called to rotate through sentences
@@ -161,4 +176,5 @@ void AAMovieText::RepeatingFunction()
 		//TextRenderComponent->SetText(FText::FromString(StringArray[SIndex]));
 	}
 }
+
 
