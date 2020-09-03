@@ -115,8 +115,8 @@ void AAMovieText::BeginPlay()
 	float RepeatingTimer = 3.0f;
 	GetWorldTimerManager().SetTimer(TimerHandle, this, &AAMovieText::RepeatingFunction, RepeatingTimer, true, InitialTimer);
 
-	FVector ActorLoc = GetActorLocation();
-	DrawDebugSphere(GetWorld(), ActorLoc, 200, 26, FColor(181, 0, 0), true, -1, 0, 2);
+	//FVector ActorLoc = GetActorLocation();
+	//DrawDebugSphere(GetWorld(), ActorLoc, 200, 26, FColor(181, 0, 0), true, -1, 0, 2);
 }
 
 // Called every frame
@@ -176,5 +176,4 @@ void AAMovieText::RepeatingFunction()
 		//TextRenderComponent->SetText(FText::FromString(StringArray[SIndex]));
 	}
 }
-
 
