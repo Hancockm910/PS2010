@@ -20,7 +20,7 @@ AASentences::AASentences()
 	TextRenderComponent->SetXScale(1.0f);
 	TextRenderComponent->SetVisibility(true);
 	TextRenderComponent->SetText(NSLOCTEXT("AnyNs", "Any", "HelloWorld"));
-	/*
+
 	FString projectDir = FPaths::ProjectContentDir();
 	projectDir += "Sentences/Scary.txt";
 	if (!FPlatformFileManager::Get().GetPlatformFile().FileExists(*projectDir))
@@ -31,28 +31,16 @@ AASentences::AASentences()
 	FFileHelper::LoadANSITextFileToStrings(*(projectDir), NULL, StringArray);
 
 	SIndex = 0;
-	*/
 }
 
 // Called when the game starts or when spawned
 void AASentences::BeginPlay()
 {
 	Super::BeginPlay();
-
-	//Read text file at run time, allows updates after adding blueprint in unreal editor
-	FString projectDir = FPaths::ProjectContentDir();
-	projectDir += "Sentences/Scary.txt";
-	if (!FPlatformFileManager::Get().GetPlatformFile().FileExists(*projectDir))
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("** Could not Find File **"));
-		return;
-	}
-	FFileHelper::LoadANSITextFileToStrings(*(projectDir), NULL, StringArray);
-
-	SIndex = 0;
 	
-	float InitialTimer = 0.0f; //Delay before starting 1st array read in seconds
-	float RepeatingTimer = 3.0f; //Delay between array reads in seconds
+
+	float InitialTimer = 2.0f;
+	float RepeatingTimer = 3.0f;
 	GetWorldTimerManager().SetTimer(TimerHandle, this, &AASentences::RepeatingFunction, RepeatingTimer, true, InitialTimer);
 }
 
@@ -65,18 +53,16 @@ void AASentences::Tick(float DeltaTime)
 
 void AASentences::RepeatingFunction()
 {
-	/*// Once we've called this function enough times, clear the Timer.
+	// Once we've called this function enough times, clear the Timer.
 	if (++SIndex >= StringArray.Num())
 	{
 		GetWorldTimerManager().ClearTimer(TimerHandle);
 		// MemberTimerHandle can now be reused for any other Timer.
 	}
 	else
-	{*/
-		//random index based on array length
-		SIndex = rand() % StringArray.Num();
+	{
 		// Sets text to the next line.
 		TextRenderComponent->SetText(FText::FromString(StringArray[SIndex]));
-	//}
+	}
 }
 
